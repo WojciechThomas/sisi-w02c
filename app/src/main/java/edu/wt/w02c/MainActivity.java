@@ -1,7 +1,11 @@
 package edu.wt.w02c;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -21,13 +25,14 @@ import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
     public final String FILENAME = "settings.txt";
+    public int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
 
+        setContentView(R.layout.activity_main);
         String savedString;
 
         if (isExternalStorageReadable())
@@ -52,6 +57,19 @@ public class MainActivity extends AppCompatActivity {
 
         TextView tv = (TextView) findViewById(R.id.savedString);
         tv.setText(savedString);
+        // Od API 23 trzeba sprawdzać czy apliacja ma prawo do ryzykownych czynności
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            // Jeśli nie - prosimy użytkownika o pozwolenie
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.READ_CONTACTS)) {
+
+            } else {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
+            }
+        }
     }
 
     @Override
@@ -67,6 +85,7 @@ public class MainActivity extends AppCompatActivity {
             File file = new File(path, FILENAME);
 
             BufferedWriter bw = new BufferedWriter(new FileWriter(file));
+
             bw.write(str);
             bw.close();
         } catch (IOException e) {
@@ -75,30 +94,6 @@ public class MainActivity extends AppCompatActivity {
         else
             Log.e("Pliki", "Nie mogę zapisywać na karcie!");
     }
-
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
-    public void onClickSave(View v) {
-        Toast.makeText(this, "Test", Toast.LENGTH_SHORT).show();
-
-    }
-
 
     public boolean isExternalStorageWritable() {
         String state = Environment.getExternalStorageState();
